@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>ParkSmart Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { background-color: #f4f6f9; }
+
+        .summary-container {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        .summary-card {
+            flex: 1;
+            min-width: 120px;
+            padding: 15px;
+            border-radius: 12px;
+            background: white;
+            border-left: 6px solid #0d6efd;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .summary-card.available  { border-left-color: #198754; }
+        .summary-card.occupied   { border-left-color: #dc3545; }
+        .summary-card.reserved   { border-left-color: #6f42c1; }
+        .summary-card.rate       { border-left-color: #ffc107; }
+        .summary-card.overstay   { border-left-color: #fd7e14; }
+        .summary-card h3 { font-size: 14px; margin: 0; color: #666; }
+        .summary-card h1 { margin: 5px 0 0 0; font-size: 2rem; }
+
+        .parking-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 15px;
+        }
+        .slot-card {
+            border-radius: 12px;
+            padding: 16px;
+            text-align: center;
+            font-weight: bold;
+            border: 3px solid;
+            background-color: white;
+            position: relative;
+        }
+        .slot-id     { font-size: 22px; margin-top: 10px; }
+        .slot-status { font-size: 13px; margin-top: 5px; }
+        .slot-plate  { font-size: 12px; margin-top: 8px; color: #555; }
+        .slot-duration { font-size: 11px; margin-top: 4px; color: #666; }
+        .slot-fee    { font-size: 12px; margin-top: 2px; font-weight: bold; color: #333; }
+
+        .free        { border-color: #198754; background-color: #e9f7ef; color: #198754; }
+        .pending     { border-color: #ffc107; background-color: #fff8e1; color: #b58900; }
+        .occupied    { border-color: #dc3545; background-color: #fdecea; color: #dc3545; }
+        .reserved    { border-color: #6f42c1; background-color: #f3eeff; color: #6f42c1; }
+        .overstay-badge {
+            position: absolute;
+            top: 6px; right: 6px;
+            background: #fd7e14;
+            color: white;
+            border-radius: 6px;
+            font-size: 10px;
+            padding: 2px 6px;
+        }
+
+        .icon { font-size: 28px; }
+
+        .section-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.08);
+            margin-bottom: 20px;
+        }
+        .section-card h5 { font-weight: 700; margin-bottom: 15px; }
+
+        .badge-plate {
+            display: inline-block;
+            background: #f0f0f0;
+            border-radius: 6px;
+            padding: 4px 10px;
+            margin: 3px;
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .toast-msg {
+            position: fixed;
+            top: 20px; right: 20px;
+            background: #198754;
+            color: white;
+            padding: 12px 20px;
+            border-radius: 10px;
+            font-weight: 600;
+            z-index: 9999;
+            display: none;
+        }
+
+        .waiting-badge {
+            display: inline-block;
+            background: #0d6efd;
+            color: white;
+            border-radius: 20px;
+            padding: 4px 14px;
+            margin: 3px;
+            font-size: 13px;
+        }
+    </style>
+</head>
+<body>
+
+<div id="toastMsg" class="toast-msg"></div>
+
+<div class="container mt-4 mb-5">
+
+    <div class="d-flex align-items-center mb-3">
+        <h2 class="mb-0">🅿️ ParkSmart Dashboard</h2>
+    </div>
+
+    <!-- Summary Cards -->
+    <div class="summary-container">
+        <div class="summary-card">
+            <h3>Total Slots</h3>
+            <h1>{{ total }}</h1>
+        </div>
+        <div class="summary-card available">
+            <h3>Available</h3>
+            <h1>{{ free }}</h1>
+        </div>
+        <div class="summary-card occupied">
+            <h3>Occupied</h3>
+            <h1>{{ occupied }}</h1>
+        </div>
+        <div class="summary-card reserved">
+            <h3>Reserved</h3>
+            <h1>{{ reserved }}</h1>
+        </div>
+        <div class="summary-card overstay">
+            <h3>Overstay</h3>
+            <h1>{{ overstay_count }}</h1>
+        </div>
+        <div class="summary-card rate">
+            <h3>Occupancy</h3>
+            <h1>{{ occupancy_rate }}%</h1>
+        </div>
+    </div>
+
+    <!-- Parking Grid -->
+    <div class="section-card">
+        <h5>🚗 Parking Layout</h5>
+        <div class="parking-grid">
+            {% for slot in slots %}
+            <div class="slot-card {{ slot.status }}">
+                {% if slot.overstay %}
+                <span class="overstay-badge">⚠ Overstay</span>
+                {% endif %}
+
+                <div class="icon">
+                    {% if slot.status == 'free' %}🟢
+                    {% elif slot.status == 'reserved' %}🟣
+                    {% elif slot.status == 'pending' %}🟡
+                    {% else %}🔴{% endif %}
+                </div>
+
+                <div class="slot-id">{{ slot.slot_id }}</div>
+                <div class="slot-status">{{ slot.status | capitalize }}</div>
+
+                {% if slot.plate %}
+                <div class="slot-plate">{{ slot.plate }}</div>
+                {% endif %}
+
+                {% if slot.duration %}
+                <div class="slot-duration">⏱ {{ slot.duration }}</div>
+                <div class="slot-fee">💰 {{ slot.estimated_fee }}</div>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <div class="row g-4">
+
+        <!-- Slot Reservation -->
+        <div class="col-md-6">
+            <div class="section-card">
+                <h5>📅 Slot Reservation</h5>
+                <form action="/reserve" method="POST" class="d-flex gap-2 mb-3">
+                    <input type="text" name="vehicle_number" class="form-control"
+                           placeholder="e.g. KL47F1234" required
+                           style="text-transform:uppercase">
+                    <button type="submit" class="btn btn-primary text-nowrap">Reserve</button>
+                </form>
+                <form action="/cancel_reservation" method="POST" class="d-flex gap-2">
+                    <input type="text" name="vehicle_number" class="form-control"
+                           placeholder="Cancel reservation" required
+                           style="text-transform:uppercase">
+                    <button type="submit" class="btn btn-outline-danger text-nowrap">Cancel</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Waiting Queue -->
+        <div class="col-md-6">
+            <div class="section-card">
+                <h5>⏳ Waiting Queue</h5>
+                {% if waiting_queue %}
+                    {% for v in waiting_queue %}
+                    <span class="waiting-badge">#{{ loop.index }} {{ v }}</span>
+                    {% endfor %}
+                {% else %}
+                    <p class="text-muted mb-0">No vehicles in queue</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Blacklist -->
+        <div class="col-md-6">
+            <div class="section-card">
+                <h5>🚫 Blacklist</h5>
+                <form action="/blacklist/add" method="POST" class="d-flex gap-2 mb-3">
+                    <input type="text" name="vehicle_number" class="form-control"
+                           placeholder="Add to blacklist" required
+                           style="text-transform:uppercase">
+                    <button type="submit" class="btn btn-danger text-nowrap">Block</button>
+                </form>
+                <div>
+                    {% for v in blacklist %}
+                    <form action="/blacklist/remove" method="POST" class="d-inline">
+                        <input type="hidden" name="vehicle_number" value="{{ v }}">
+                        <span class="badge-plate">{{ v }}
+                            <button type="submit" style="border:none;background:none;color:#dc3545;font-weight:bold;cursor:pointer;">✕</button>
+                        </span>
+                    </form>
+                    {% else %}
+                    <p class="text-muted mb-0">No blocked vehicles</p>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Whitelist -->
+        <div class="col-md-6">
+            <div class="section-card">
+                <h5>✅ Whitelist</h5>
+                <form action="/whitelist/add" method="POST" class="d-flex gap-2 mb-3">
+                    <input type="text" name="vehicle_number" class="form-control"
+                           placeholder="Add to whitelist" required
+                           style="text-transform:uppercase">
+                    <button type="submit" class="btn btn-success text-nowrap">Allow</button>
+                </form>
+                <div>
+                    {% for v in whitelist %}
+                    <form action="/whitelist/remove" method="POST" class="d-inline">
+                        <input type="hidden" name="vehicle_number" value="{{ v }}">
+                        <span class="badge-plate">{{ v }}
+                            <button type="submit" style="border:none;background:none;color:#dc3545;font-weight:bold;cursor:pointer;">✕</button>
+                        </span>
+                    </form>
+                    {% else %}
+                    <p class="text-muted mb-0">No whitelisted vehicles</p>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<script>
+    // Auto refresh every 5 seconds — pauses when user is typing
+    let userTyping = false;
+
+    document.querySelectorAll("input").forEach(input => {
+        input.addEventListener("focus", () => userTyping = true);
+        input.addEventListener("blur", () => userTyping = false);
+    });
+
+    setInterval(function() {
+        if (!userTyping) {
+            window.location.reload();
+        }
+    }, 5000);
+
+    // Toast message on redirect
+    const params = new URLSearchParams(window.location.search);
+    const msg = params.get("msg");
+    if (msg) {
+        const toast = document.getElementById("toastMsg");
+        toast.textContent = decodeURIComponent(msg.replace(/\+/g, " "));
+        toast.style.display = "block";
+        setTimeout(() => toast.style.display = "none", 3000);
+    }
+</script>
+
+</body>
+</html>
