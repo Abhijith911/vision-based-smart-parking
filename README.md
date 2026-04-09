@@ -12,10 +12,6 @@
   A fully automated parking management system built on <strong>Raspberry Pi 4</strong> that uses computer vision to detect vehicle number plates, allocates parking slots in real time, and displays live status on a web dashboard — with zero manual intervention.
 </p>
 
-<p align="center">
-  <strong>Saintgits College of Engineering — B.Tech Mini Project</strong>
-</p>
-
 ---
 
 ## 🎯 Overview
