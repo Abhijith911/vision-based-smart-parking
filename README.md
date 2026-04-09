@@ -1,10 +1,24 @@
 # 🅿️ Vision-Based Smart Parking System
 
-A fully automated parking management system built on **Raspberry Pi 4** that uses computer vision to detect vehicle number plates, allocates parking slots in real time, and displays live status on a web dashboard — with zero manual intervention.
+<p align="center">
+  <img src="https://img.shields.io/badge/Platform-Raspberry%20Pi%204-red?style=for-the-badge&logo=raspberrypi"/>
+  <img src="https://img.shields.io/badge/Vision-OpenCV-blue?style=for-the-badge&logo=opencv"/>
+  <img src="https://img.shields.io/badge/OCR-Tesseract-green?style=for-the-badge"/>
+  <img src="https://img.shields.io/badge/Dashboard-Flask-black?style=for-the-badge&logo=flask"/>
+  <img src="https://img.shields.io/badge/IoT-ESP8266-orange?style=for-the-badge"/>
+</p>
+
+<p align="center">
+  A fully automated parking management system built on <strong>Raspberry Pi 4</strong> that uses computer vision to detect vehicle number plates, allocates parking slots in real time, and displays live status on a web dashboard — with zero manual intervention.
+</p>
+
+<p align="center">
+  <strong>Saintgits College of Engineering — B.Tech Mini Project</strong>
+</p>
 
 ---
 
-## 📸 Overview
+## 🎯 Overview
 
 | Feature | Details |
 |---|---|
@@ -25,8 +39,8 @@ The Pi Camera V2 streams video via a **GStreamer + libcamera pipeline** into Ope
 ### 2. Number Plate Detection
 Each frame is processed through a computer vision pipeline:
 - Grayscale → Gaussian Blur → Canny Edge Detection
-- Contour detection + aspect ratio filtering (1.8–6.0) to isolate plate region
-- Stability check — plate must hold position for 10 consecutive frames before OCR triggers
+- Contour detection + aspect ratio filtering (1.8–6.0) to isolate the plate region
+- Stability check — plate must hold position for **10 consecutive frames** before OCR triggers
 
 ### 3. OCR Extracts Plate Number
 - Tesseract OCR reads the plate text
@@ -39,11 +53,11 @@ Each frame is processed through a computer vision pipeline:
 - Pi receives via PySerial in a background thread → slot moves **Pending → Occupied**
 
 ### 5. Entry / Exit Logic
-- **Entry:** plate logged, slot allocated (Pending), awaits ultrasonic confirmation
-- **Exit:** same plate detected again → fee calculated → slot freed → waiting queue checked
+- **Entry:** Plate logged, slot allocated (Pending), awaits ultrasonic confirmation
+- **Exit:** Same plate detected again → fee calculated → slot freed → waiting queue checked
 
 ### 6. Live Dashboard
-Flask web app at `http://<Pi-IP>:5000` auto-refreshes every 5 seconds showing live slot status, fees, and management panels.
+Flask web app at `http://<Pi-IP>:5000` — auto-refreshes every 5 seconds with live slot status, fees, and management panels.
 
 ---
 
@@ -74,25 +88,6 @@ Flask web app at `http://<Pi-IP>:5000` auto-refreshes every 5 seconds showing li
 
 ---
 
-## 🗂️ Project Structure
-
-```
-smart_parking_final/
-├── main.py               # Camera, OCR, entry/exit logic, serial listener
-├── slot_manager.py       # Slot allocation, reservation, blacklist, queue
-├── parking_slots.json    # Live slot states + waiting queue
-├── parking_data.xlsx     # Vehicle entry/exit history + fees
-├── vehicle_lists.json    # Blacklist and whitelist
-└── ui/
-    ├── app.py            # Flask web server + all routes
-    ├── static/
-    │   └── style.css     # Dashboard styling
-    └── templates/
-        └── dashboard.html  # Live dashboard UI
-```
-
----
-
 ## 🔌 Hardware Setup
 
 ```
@@ -120,7 +115,7 @@ Pi Camera V2  ──CSI──►  Raspberry Pi 4
 
 ## 📦 Installation
 
-### 1. Flash Raspberry Pi OS (32-bit) on SD Card
+### 1. Flash Raspberry Pi OS (32-bit)
 Use **Raspberry Pi Imager** — enable SSH and set WiFi credentials before flashing.
 
 ### 2. Connect via SSH and Update
@@ -144,7 +139,7 @@ cd smart-parking-system
 ```
 
 ### 5. Flash ESP8266
-Upload `esp8266_ultrasonic.ino` to your NodeMCU using Arduino IDE (set board to **NodeMCU 1.0**).
+Upload `esp8266_ultrasonic.ino` to your NodeMCU using Arduino IDE — set board to **NodeMCU 1.0**.
 
 ---
 
@@ -164,28 +159,40 @@ cd smart_parking_final
 python3 ui/app.py
 ```
 
-Then open your browser and go to:
-```
-http://<your-pi-ip>:5000
-```
-
-To find your Pi's IP:
+Open your browser at `http://<your-pi-ip>:5000`. To find your Pi's IP:
 ```bash
 hostname -I
 ```
 
 ---
 
+## 🗂️ Project Structure
+
+```
+smart_parking_final/
+├── main.py               # Camera, OCR, entry/exit logic, serial listener
+├── slot_manager.py       # Slot allocation, reservation, blacklist, queue
+├── parking_slots.json    # Live slot states + waiting queue
+├── parking_data.xlsx     # Vehicle entry/exit history + fees
+├── vehicle_lists.json    # Blacklist and whitelist
+└── ui/
+    ├── app.py            # Flask web server + all routes
+    ├── static/
+    │   └── style.css     # Dashboard styling
+    └── templates/
+        └── dashboard.html  # Live dashboard UI
+```
+
+---
+
 ## 📁 Data Storage
 
-### parking_data.xlsx
-
-**CURRENT_VEHICLES sheet:**
+**`parking_data.xlsx` — CURRENT_VEHICLES sheet:**
 | Vehicle Number | Entry Time | Fee |
 |---|---|---|
 | KL47F1234 | 2026-03-27 10:30:00 | |
 
-**HISTORY_LOG sheet:**
+**`parking_data.xlsx` — HISTORY_LOG sheet:**
 | Vehicle Number | Entry Time | Exit Time | Fee |
 |---|---|---|---|
 | KL47F1234 | 2026-03-27 10:30:00 | 2026-03-27 11:45:00 | Rs. 12.5 |
@@ -193,8 +200,6 @@ hostname -I
 ---
 
 ## 🔧 Configuration
-
-You can change these values in the respective files:
 
 | Setting | File | Variable | Default |
 |---|---|---|---|
@@ -227,7 +232,7 @@ You can change these values in the respective files:
 ## ⚠️ Known Limitations
 
 - OCR accuracy depends on lighting conditions and camera angle
-- Single camera — entry/exit distinguished by software logic
+- Single camera — entry/exit distinguished by software logic only
 - Ultrasonic sensor may occasionally detect non-vehicle objects (handled by 2.5s time filter)
 
 ---
@@ -235,14 +240,10 @@ You can change these values in the respective files:
 ## 🚀 Future Improvements
 
 - Multi-camera support for separate entry/exit lanes
-- Replace Tesseract with EasyOCR or deep learning model for better accuracy
-- Mobile application integration
+- Replace Tesseract with EasyOCR or a deep learning model for better accuracy
+- Mobile app integration
 - Cloud database (SQLite / Firebase) instead of Excel
 - AI-based vehicle type classification
 - Smart navigation to free slots
 
 ---
-
-## 📄 License
-
-This project is for educational purposes as part of B.Tech Mini Project at Saintgits College of Engineering.
